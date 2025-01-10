@@ -128,12 +128,12 @@
           "settings": {
             "condensedTableLayout": true,
             "showGoButtonOnFilterBar": true,
-            "tableType": "AnalyticalTable",
             "qualifier": "Default",
             "autoHide": true,
             "smartVariantManagement": false,
             "tableSettings": {
-              "multiSelect": false
+              "multiSelect": false,
+              "type": "AnalyticalTable"
             },
             "keyPerformanceIndicators": {}
           }
