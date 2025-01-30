@@ -1,0 +1,124 @@
+@AbapCatalog.sqlViewName: 'ZISDANLC'
+@AbapCatalog.compiler.compareFilter: true
+@AbapCatalog.preserveKey: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Sales Document Analytics Cube View'
+@VDM.viewType: #COMPOSITE
+@Analytics.dataCategory: #CUBE
+@ClientHandling.algorithm: #SESSION_VARIABLE
+@ObjectModel.usageType.dataClass: #MIXED
+@ObjectModel.usageType.serviceQuality: #D
+@ObjectModel.usageType.sizeCategory: #XL
+define view ZI_SD_Anlytics_Cube
+  as select from I_SalesDocument as _Header
+{
+          @EndUserText.label: 'Sales Order'
+  key     _Header.SalesDocument,
+          @EndUserText.label: 'Sales Order Item'
+  key     _Header._Item.SalesDocumentItem   as SalesDocumentItem,
+          @EndUserText.label: 'Sales Document Category'
+          _Header.SDDocumentCategory        as SDDocumentCategory,
+          @EndUserText.label: 'Sales Order Type'
+          _Header.SalesDocumentType         as SalesDocumentType,
+          @EndUserText.label: 'Creation Date'
+          _Header.CreationDate              as CreationDate,
+          @EndUserText.label: 'Sales Organization'
+          _Header.SalesOrganization         as SalesOrganization,
+          @EndUserText.label: 'Distribution Channel'
+          _Header.DistributionChannel       as DistributionChannel,
+          @EndUserText.label: 'Sold To Party'
+          _Header.SoldToParty               as SoldToParty,
+          @EndUserText.label: 'Document Date'
+          _Header.SalesDocumentDate         as SalesDocumentDate,
+          @EndUserText.label: 'Period'
+          case substring(_Header.SalesDocumentDate, 5,2) //as Period,
+          when '01' then concat('Jan-', substring(_Header.SalesDocumentDate,1,4))
+          when '02' then concat('Feb-', substring(_Header.SalesDocumentDate,1,4))
+          when '03' then concat('Mar-', substring(_Header.SalesDocumentDate,1,4))
+          when '04' then concat('Apr-', substring(_Header.SalesDocumentDate,1,4))
+          when '05' then concat('May-', substring(_Header.SalesDocumentDate,1,4))
+          when '06' then concat('Jun-', substring(_Header.SalesDocumentDate,1,4))
+          when '07' then concat('Jul-', substring(_Header.SalesDocumentDate,1,4))
+          when '08' then concat('Aug-', substring(_Header.SalesDocumentDate,1,4))
+          when '09' then concat('Sep-', substring(_Header.SalesDocumentDate,1,4))
+          when '10' then concat('Oct-', substring(_Header.SalesDocumentDate,1,4))
+          when '11' then concat('Nov-', substring(_Header.SalesDocumentDate,1,4))
+          when '12' then concat('Dec-', substring(_Header.SalesDocumentDate,1,4))
+          end as Period, 
+          @EndUserText.label: 'Year'
+          substring(_Header.SalesDocumentDate, 1,4) as SalesYear,
+          @DefaultAggregation: #SUM
+          @EndUserText.label: 'Total Order Amount'
+          @Semantics.amount.currencyCode: 'TransactionCurrency'
+          case TransactionCurrency
+          when 'USD' then _Header.TotalNetAmount
+          else currency_conversion( amount =>  _Header.TotalNetAmount,
+                                    source_currency => TransactionCurrency,
+                                    target_currency => cast('USD' as abap.cuky),
+                                    exchange_rate_date => SalesDocumentDate,
+                                    exchange_rate_type => 'M',
+                                    error_handling     => 'SET_TO_NULL' )
+                               end as TotalNetAmount,
+          @EndUserText.label: 'Currency'
+          @Semantics.currencyCode: true
+          //_Header.TransactionCurrency       as TransactionCurrency,
+          cast('USD' as abap.cuky) as TransactionCurrency,
+          @Semantics.amount.currencyCode: 'TransactionCurrency'
+          @EndUserText.label: 'Target Total Sales Amount'          
+          cast( '20000000' as netwr_ak ) as Target_Amount,
+          @EndUserText.label: 'Cost Center'
+          _Header.CostCenter                as CostCenter,
+          @EndUserText.label: 'Controlling Area'
+          _Header.ControllingArea           as ControllingArea,
+          @EndUserText.label: 'Overall Order Status'
+          _Header.OverallSDProcessStatus    as OverallSDProcessStatus,
+          @EndUserText.label: 'Overall Delivery Status'
+          _Header.OverallDeliveryStatus     as OverallDeliveryStatus,
+          @EndUserText.label: 'Material'
+          _Header._Item.Material            as Material,
+          @EndUserText.label: 'Plant'
+          _Header._Item.Plant               as Plant,
+          @EndUserText.label: 'Shipping Point'
+          _Header._Item.ShippingPoint       as ShippingPoint,
+          @DefaultAggregation: #SUM
+          @EndUserText.label: 'Item Quantity'
+//          case _Header._Item.OrderQuantityUnit
+//          when 'EA' then _Header._Item.OrderQuantity
+//          else unit_conversion(
+//                    quantity    => _Header._Item.OrderQuantity,
+//                    source_unit => _Header._Item.OrderQuantityUnit,
+//                    target_unit => cast('EA' as abap.unit)
+//      )    end     as OrderQuantity,
+          _Header._Item.OrderQuantity       as OrderQuantity,
+          @EndUserText.label: 'Unit'
+          _Header._Item.OrderQuantityUnit   as OrderQuantityUnit,
+          //cast('EA' as abap.unit) as OrderQuantityUnit,
+          
+          @EndUserText.label: 'Currency'
+          cast('USD' as abap.cuky) as ItemCurrency,          
+          @DefaultAggregation: #SUM
+          @EndUserText.label: 'Item Net Amount'
+          case _Header._Item.TransactionCurrency 
+          when 'USD' then _Header._Item.NetAmount 
+          else currency_conversion( amount => _Header._Item.NetAmount ,
+                                    source_currency => _Header._Item.TransactionCurrency,
+                                    target_currency => cast('USD' as abap.cuky),
+                                    exchange_rate_date => SalesDocumentDate,
+                                    exchange_rate_type => 'M',
+                                    error_handling     => 'SET_TO_NULL' )          
+          end          as NetAmount,
+          @DefaultAggregation: #SUM
+          @EndUserText.label: 'Item Tax Amount'
+          case _Header._Item.TransactionCurrency
+          when 'USD' then _Header._Item.TaxAmount
+          else currency_conversion( amount => _Header._Item.TaxAmount ,
+                                    source_currency => _Header._Item.TransactionCurrency,
+                                    target_currency => cast('USD' as abap.cuky),
+                                    exchange_rate_date => SalesDocumentDate,
+                                    exchange_rate_type => 'M',
+                                    error_handling     => 'SET_TO_NULL' )
+          end           as ItemTaxAmount,
+          @EndUserText.label: 'Customer Country'
+          _Header._Partner[1:PartnerFunction = 'AG']._Address.Country as CustomerCountry,
+          _Header._SoldToParty as _SoldToParty
+}

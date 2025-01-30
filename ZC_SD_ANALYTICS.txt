@@ -1,0 +1,103 @@
+@AbapCatalog.sqlViewName: 'ZCSDANLC'
+@AbapCatalog.compiler.compareFilter: true
+@AbapCatalog.preserveKey: true
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Sales Document Analytics View'
+//@Analytics.query: true
+@VDM.viewType: #CONSUMPTION
+
+@Search.searchable: true
+@ObjectModel.usageType.serviceQuality: #D
+@ObjectModel.usageType.sizeCategory: #L
+@ObjectModel.usageType.dataClass: #TRANSACTIONAL
+
+@ClientHandling.algorithm: #SESSION_VARIABLE
+@Metadata.allowExtensions: true
+@Metadata.ignorePropagatedAnnotations: false
+
+//@OData.publish: true
+
+
+
+define view ZC_SD_ANALYTICS
+  as select from ZI_SD_Anlytics_Cube
+{
+
+      @Search: { defaultSearchElement: true, ranking: #HIGH, fuzzinessThreshold: 1 }
+      @Consumption.valueHelpDefinition: [{ entity: { name : 'C_SDDocumentVH', element : 'SalesDocument' } }]
+      @EndUserText.label: 'Sales Order'
+  key SalesDocument,
+      @EndUserText.label: 'Sales Order Item'  
+  key SalesDocumentItem,
+      @EndUserText.label: 'Sales Document Category'
+      SDDocumentCategory,
+      @EndUserText.label: 'Sales Order Type'
+      SalesDocumentType,
+      @EndUserText.label: 'Creation Date'
+      CreationDate,
+      @EndUserText.label: 'Sales Organization'
+      SalesOrganization,
+      @EndUserText.label: 'Distribution Channel'
+      DistributionChannel,
+      @Search: { defaultSearchElement: true, ranking: #HIGH, fuzzinessThreshold: 1 }
+      @Consumption.valueHelpDefinition: [ { entity: { name: 'I_Customer_VH', element: 'Customer' } } ]
+      @ObjectModel.foreignKey.association: '_SoldToParty'
+      SoldToParty,
+      @EndUserText.label: 'Document Date'
+      SalesDocumentDate,
+      Period,
+      SalesYear,
+      @DefaultAggregation: #SUM
+      @EndUserText.label: 'Total Order Amount'      
+      @Semantics.amount.currencyCode: 'TransactionCurrency'
+      TotalNetAmount,
+      @Semantics.currencyCode: true
+      @EndUserText.label: 'Currency'
+      TransactionCurrency,
+      @Semantics.amount.currencyCode: 'TransactionCurrency'
+      @EndUserText.label: 'Target Sales Amount'
+      Target_Amount,
+      @EndUserText.label: 'Cost Center'
+      CostCenter,
+      @EndUserText.label: 'Controlling Area'
+      ControllingArea,
+      @EndUserText.label: 'Overall Order Status'
+      OverallSDProcessStatus,
+      @EndUserText.label: 'Overall Delivery Status'
+      OverallDeliveryStatus,
+      @EndUserText.label: 'Material'
+      @Consumption.semanticObject: 'Material'
+      @Consumption.valueHelpDefinition: [
+        { entity:  { name:    'I_MaterialStdVH',
+                     element: 'Material' }
+        }]
+      Material,
+      @EndUserText.label: 'Plant'
+      @Consumption.semanticObject: 'Plant'
+      @Consumption.valueHelpDefinition: [{ entity: { name : 'C_MM_PlantValueHelp', element : 'Plant' } }]
+      @EndUserText: {quickInfo: 'Plant'}      
+      Plant,
+      @EndUserText.label: 'Shipping Point'
+      ShippingPoint,
+      @DefaultAggregation: #SUM
+      @EndUserText.label: 'Item Quantity'
+      @Semantics.quantity.unitOfMeasure: 'OrderQuantityUnit'
+      OrderQuantity,
+      @EndUserText.label: 'Unit'
+      @Semantics.unitOfMeasure: true
+      OrderQuantityUnit,
+      @DefaultAggregation: #SUM
+      @EndUserText.label: 'Item Net Amount'
+      @Semantics.amount.currencyCode: 'ItemCurrency'
+      NetAmount,
+      @EndUserText.label: 'Currency'
+      @Semantics.currencyCode: true
+      ItemCurrency,
+      @DefaultAggregation: #SUM
+      @EndUserText.label: 'Item Tax Amount'      
+      @Semantics.amount.currencyCode: 'ItemCurrency'
+      ItemTaxAmount,
+      @EndUserText.label: 'Customer Country'
+      @Consumption.valueHelpDefinition: [{ entity: { name : 'I_Country', element : 'Country' } }]
+      CustomerCountry
+}
